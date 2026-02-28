@@ -1,0 +1,5 @@
+Testing DB connection and Initializing Schema...
+Tables created successfully.
+Tables in DB: ['announcements', 'assignments', 'attendances', 'chat_logs', 'comments', 'courses', 'discussions', 'grades', 'quiz_attempts', 'quiz_questions', 'quizzes', 'resources', 'submissions', 'timetable_entries', 'users']
+Mock users seeded successfully.
+Current user count: 1

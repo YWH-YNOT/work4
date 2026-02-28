@@ -1,0 +1,355 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --text-main: #ffffff;
+    --text-secondary: #a3a3a3;
+}
+
+html.light-mode {
+    --text-main: #000000;
+    --text-secondary: #333333;
+}
+
+html,
+body,
+#app {
+    height: 100%;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #030712;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.6);
+}
+
+/* GLOBAL LIGHT MODE THEME OVERRIDES */
+html.light-mode,
+html.light-mode body,
+html.light-mode #app {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+/* Layout Light Mode Support */
+html.light-mode .layout-wrap {
+    background: #f1f5f9 !important;
+}
+
+html.light-mode .main-content {
+    background: radial-gradient(ellipse at 80% 20%, #e2e8f0 0%, #f8fafc 100%) !important;
+}
+
+html.light-mode .sidebar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-mode .sidebar-footer {
+    background: rgba(241, 245, 249, 0.8) !important;
+}
+
+html.light-mode .brand-name {
+    color: #0f172a !important;
+}
+
+html.light-mode .username {
+    color: #1e293b !important;
+}
+
+html.light-mode .nav-item {
+    color: #475569 !important;
+}
+
+html.light-mode .nav-item:hover {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #0f172a !important;
+}
+
+html.light-mode .cyber-grid-bg,
+html.light-mode .cyber-grid {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+}
+
+/* Auth Pages Light Mode */
+html.light-mode .auth-container {
+    background: radial-gradient(ellipse at 50% 50%, #e2e8f0 0%, #f8fafc 100%) !important;
+    color: #334155 !important;
+}
+
+html.light-mode .auth-card {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-mode .logo-title {
+    color: #0f172a !important;
+}
+
+html.light-mode .input-wrap {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light-mode .input-wrap input {
+    color: #1e293b !important;
+}
+
+html.light-mode .input-wrap input::placeholder {
+    color: #94a3b8 !important;
+}
+
+html.light-mode .btn-primary {
+    background: rgba(99, 102, 241, 0.1) !important;
+    border-color: #6366f1 !important;
+    color: #4f46e5 !important;
+}
+
+html.light-mode .btn-primary:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3) !important;
+}
+
+html.light-mode .theme-toggle {
+    background: rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-mode .theme-toggle:hover {
+    background: #ffffff !important;
+    transform: scale(1.05);
+}
+
+/* Element Plus Tech Overrides */
+.el-dialog {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid rgba(6, 182, 212, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(6, 182, 212, 0.1) inset !important;
+    backdrop-filter: blur(10px);
+}
+
+html.light-mode .el-dialog {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light-mode .el-dialog__title {
+    color: #0f172a !important;
+}
+
+.el-dialog__title {
+    color: #f8fafc !important;
+    font-weight: 800 !important;
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 0.5px;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+    color: #06b6d4 !important;
+    font-weight: 900;
+}
+
+.el-dialog__body {
+    color: #94a3b8 !important;
+}
+
+.el-select-dropdown {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid rgba(6, 182, 212, 0.3) !important;
+    backdrop-filter: blur(10px);
+}
+
+html.light-mode .el-select-dropdown {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-select-dropdown__item {
+    color: #e2e8f0 !important;
+    font-family: 'Inter', sans-serif;
+}
+
+html.light-mode .el-select-dropdown__item {
+    color: #475569 !important;
+}
+
+.el-select-dropdown__item.is-hovering,
+.el-select-dropdown__item:hover {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #cffafe !important;
+}
+
+.el-select-dropdown__item.is-selected {
+    color: #67e8f9 !important;
+    font-weight: 700 !important;
+}
+
+html.light-mode .el-select-dropdown__item:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+}
+
+html.light-mode .el-select-dropdown__item.is-selected {
+    color: #4f46e5 !important;
+    font-weight: 700 !important;
+}
+
+/* 原生 select 深色主题（Quiz 页等使用了 <select> 标签的地方） */
+select {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    appearance: auto;
+}
+
+select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+html.light-mode select {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+html.light-mode select option {
+    background: #ffffff;
+    color: #1e293b;
+}
+
+/* Global inputs and buttons override for tech vibe */
+.el-input__wrapper,
+.el-textarea__inner {
+    background: rgba(2, 6, 23, 0.6) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.2) inset !important;
+}
+
+html.light-mode .el-input__wrapper,
+html.light-mode .el-textarea__inner {
+    background: #ffffff !important;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+    box-shadow: 0 0 0 1px #06b6d4 inset !important;
+}
+
+html.light-mode .el-input__wrapper.is-focus {
+    box-shadow: 0 0 0 1px #6366f1 inset !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+    color: #f8fafc !important;
+    font-family: 'Roboto Mono', monospace;
+}
+
+html.light-mode .el-input__inner,
+html.light-mode .el-textarea__inner {
+    color: #1e293b !important;
+}
+
+.el-button {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+}
+
+.el-button--primary {
+    background: rgba(6, 182, 212, 0.1) !important;
+    border: 1px solid #06b6d4 !important;
+    color: #cffafe !important;
+}
+
+html.light-mode .el-button--primary {
+    background: rgba(99, 102, 241, 0.1) !important;
+    border: 1px solid #6366f1 !important;
+    color: #4f46e5 !important;
+}
+
+.el-button--primary:hover {
+    background: rgba(6, 182, 212, 0.25) !important;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.4) !important;
+}
+
+html.light-mode .el-button--primary:hover {
+    background: rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Global markdown styles inside chat bubbles & announcements */
+.msg-bubble p {
+    margin: 0 0 8px;
+}
+
+.msg-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.msg-bubble code {
+    background: rgba(6, 182, 212, 0.15);
+    color: #67e8f9;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.msg-bubble pre {
+    background: rgba(2, 6, 23, 0.8);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 8px;
+    padding: 14px;
+    overflow-x: auto;
+}
+
+.msg-bubble ul,
+.msg-bubble ol {
+    padding-left: 20px;
+}
