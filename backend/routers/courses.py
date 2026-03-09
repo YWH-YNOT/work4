@@ -45,7 +45,7 @@ def get_my_courses(
                 "id": c.id,
                 "name": c.name,
                 "course_code": c.course_code or "",
-                "teacher_name": c.teacher.username if c.teacher else "未知",
+                "teacher_name": (c.teacher.full_name or c.teacher.username) if c.teacher else "未知",
                 "description": c.description,
             })
     return unique
@@ -62,7 +62,7 @@ def create_course(
     db: Session = Depends(get_db),
     current_user=Depends(require_role("teacher", "admin"))
 ):
-    c = models.Course(**req.dict(), teacher_id=current_user.id)
+    c = models.Course(**req.model_dump(), teacher_id=current_user.id)
     db.add(c)
     db.commit()
     db.refresh(c)

@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
+    # Jetson 姿态检测服务地址
+    JETSON_IP:   str = "192.168.1.100"
+    JETSON_PORT: str = "5000"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

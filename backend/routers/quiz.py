@@ -6,7 +6,7 @@ from core.auth import get_current_user, require_role
 from models import core as models
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -60,7 +60,7 @@ def list_quizzes(course_id: Optional[int] = None, db: Session = Depends(get_db),
 
 @router.post("/")
 def create_quiz(req: QuizCreate, db: Session = Depends(get_db), _=Depends(require_role("teacher", "admin"))):
-    qz = models.Quiz(**req.dict())
+    qz = models.Quiz(**req.model_dump())
     db.add(qz)
     db.commit()
     db.refresh(qz)
@@ -69,7 +69,7 @@ def create_quiz(req: QuizCreate, db: Session = Depends(get_db), _=Depends(requir
 
 @router.post("/{quiz_id}/questions")
 def add_question(quiz_id: int, req: QuestionCreate, db: Session = Depends(get_db), _=Depends(require_role("teacher", "admin"))):
-    q = models.QuizQuestion(quiz_id=quiz_id, **req.dict())
+    q = models.QuizQuestion(quiz_id=quiz_id, **req.model_dump())
     db.add(q)
     db.commit()
     db.refresh(q)
@@ -95,6 +95,12 @@ def submit_quiz(quiz_id: int, req: AttemptCreate, db: Session = Depends(get_db),
     qz = db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
     if not qz:
         raise HTTPException(404, "测验不存在")
+    # 检查时间窗口
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if qz.start_at and now < qz.start_at:
+        raise HTTPException(400, "测验尚未开始")
+    if qz.end_at and now > qz.end_at:
+        raise HTTPException(400, "测验已结束，不能提交")
     if db.query(models.QuizAttempt).filter(models.QuizAttempt.quiz_id == quiz_id, models.QuizAttempt.student_id == current_user.id).first():
         raise HTTPException(400, "已作答过该测验")
     # Auto grading

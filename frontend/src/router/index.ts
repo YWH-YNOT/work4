@@ -24,6 +24,8 @@ const router = createRouter({
                 { path: 'attendance', component: () => import('@/views/student/Attendance.vue') },
                 { path: 'discussions', component: () => import('@/views/student/Discussions.vue') },
                 { path: 'resources', component: () => import('@/views/student/Resources.vue') },
+                { path: 'posture', component: () => import('@/views/student/PostureHistory.vue') },
+                { path: 'profile', component: () => import('@/views/shared/Profile.vue') },
             ]
         },
 
@@ -44,6 +46,8 @@ const router = createRouter({
                 { path: 'announcements', component: () => import('@/views/teacher/Announcements.vue') },
                 { path: 'discussions', component: () => import('@/views/teacher/Discussions.vue') },
                 { path: 'logs', component: () => import('@/views/teacher/Logs.vue') },
+                { path: 'posture', component: () => import('@/views/teacher/PostureMonitor.vue') },
+                { path: 'profile', component: () => import('@/views/shared/Profile.vue') },
             ]
         },
 

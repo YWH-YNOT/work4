@@ -26,7 +26,9 @@
           <div class="avatar teacher">{{ auth.user?.username?.charAt(0).toUpperCase() }}</div>
           <div>
             <div class="username">{{ auth.user?.username }}</div>
-            <div class="user-role">教师</div>
+            <div class="user-role">
+              教师 · <router-link to="/teacher/profile" class="profile-link">个人中心</router-link>
+            </div>
           </div>
         </div>
         <button @click="handleLogout" class="logout-btn" title="断开连接">
@@ -59,6 +61,7 @@ function handleLogout() {
 
 const navItems = [
   { to: '/teacher/dashboard', icon: 'House', label: '指挥中心' },
+  { to: '/teacher/posture', icon: 'View', label: '姿态监控' },
   { to: '/teacher/courses', icon: 'Collection', label: '矩阵管理' },
   { to: '/teacher/assignments', icon: 'Document', label: '作业布控' },
   { to: '/teacher/quiz', icon: 'Memo', label: '考核配置' },
@@ -154,7 +157,9 @@ const navItems = [
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 .username { font-size: 13px; font-weight: 700; color: var(--text-main); font-family: 'Roboto Mono', monospace;}
-.user-role { font-size: 11px; color: #10b981; margin-top: 2px; }
+.user-role { font-size: 11px; color: #10b981; margin-top: 2px; display: flex; gap: 4px; align-items: center; }
+.profile-link { color: #10b981; text-decoration: none; font-size: 11px; transition: color .2s; }
+.profile-link:hover { color: #34d399; text-decoration: underline; }
 
 .logout-btn {
   background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); 

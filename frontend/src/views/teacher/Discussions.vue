@@ -92,6 +92,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const courses = ref<any[]>([])
 const discussions = ref<any[]>([])
@@ -131,7 +132,7 @@ async function postReply() {
     replyContent.value = ''
     const r = await axios.get(`/api/v1/discussions/${activeDiscussion.value.id}`)
     activeDiscussion.value = r.data
-  } catch(e: any) { alert(e.response?.data?.detail || '回复失败') }
+  } catch(e: any) { ElMessage.error(e.response?.data?.detail || '回复失败') }
   finally { saving.value = false }
 }
 
@@ -141,13 +142,13 @@ function openCreate() {
 }
 
 async function createDiscussion() {
-  if (!createForm.value.title.trim() || !createForm.value.content.trim()) { alert('请填写标题和内容'); return }
+  if (!createForm.value.title.trim() || !createForm.value.content.trim()) { ElMessage.warning('请填写标题和内容'); return }
   saving.value = true
   try {
     await axios.post('/api/v1/discussions/', createForm.value)
     showCreate.value = false
     await load()
-  } catch(e: any) { alert(e.response?.data?.detail || '发布失败') }
+  } catch(e: any) { ElMessage.error(e.response?.data?.detail || '发布失败') }
   finally { saving.value = false }
 }
 

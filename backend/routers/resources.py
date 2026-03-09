@@ -1,6 +1,7 @@
 """资源文件路由"""
 import os
 import shutil
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -39,7 +40,8 @@ async def upload_resource(
     if len(content) > MAX_SIZE:
         raise HTTPException(400, "文件不能超过 10MB")
 
-    safe_name = f"{current_user.id}_{file.filename}"
+    # 加入 uuid 前缀防止同名文件相互覆盖（磁盘唯一，数据库各自独立记录）
+    safe_name = f"{current_user.id}_{uuid.uuid4().hex[:8]}_{file.filename}"
     filepath = os.path.join(UPLOAD_DIR, safe_name)
     with open(filepath, "wb") as f:
         f.write(content)

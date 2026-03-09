@@ -71,16 +71,24 @@ async def chat_stream(
             logger.error(f"Agent stream error: {e}")
             yield f"data: {json.dumps({'content': f'系统错误: {str(e)}'})}\n\n"
         finally:
-            # 持久化助教回复
-            assistant_log = models.ChatLog(
-                user_id=current_user.id,
-                course_id=request.course_id,
-                role="assistant",
-                content=full_response,
-                conversation_id=request.conversation_id or "default",
-            )
-            db.add(assistant_log)
-            db.commit()
+            # 持久化助教回复（加 try/except 防止因流异常导致 session 失效后二次报错）
+            if full_response:
+                try:
+                    assistant_log = models.ChatLog(
+                        user_id=current_user.id,
+                        course_id=request.course_id,
+                        role="assistant",
+                        content=full_response,
+                        conversation_id=request.conversation_id or "default",
+                    )
+                    db.add(assistant_log)
+                    db.commit()
+                except Exception as db_err:
+                    logger.error(f"Failed to persist assistant log: {db_err}")
+                    try:
+                        db.rollback()
+                    except Exception:
+                        pass
             yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")

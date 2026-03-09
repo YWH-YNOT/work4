@@ -5,7 +5,7 @@ echo Starting AI_YWH Agentic Architecture MVP
 
 echo Starting FastAPI Backend...
 cd backend
-start cmd /c "call venv\Scripts\activate && uvicorn main:app --port 8002 --reload"
+start cmd /c "call venv\Scripts\activate && uvicorn main:app --host 0.0.0.0 --port 8002 --reload"
 
 echo Starting Vue3 Frontend (Premium Design)...
 cd ..\frontend

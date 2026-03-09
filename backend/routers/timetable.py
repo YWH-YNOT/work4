@@ -1,12 +1,13 @@
 """课表路由 - 使用 JWT 认证"""
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from core.database import get_db
 from core.auth import get_current_user
 from models import core as models
 from schemas import timetable as timetable_schemas
 from services.timetable_parser import TimetableParser
 import logging
+import uuid
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -38,21 +39,28 @@ async def import_timetable(
             if not course_name:
                 continue
 
+            # 先按 full_name 查真实教师，再按 username 查，都没有才创建占位账号
             teacher = db.query(models.User).filter(
-                models.User.username == teacher_name,
+                models.User.full_name == teacher_name,
                 models.User.role == "teacher"
             ).first()
             if not teacher:
-                # 为教师名创建一个占位账号
+                teacher = db.query(models.User).filter(
+                    models.User.username == teacher_name,
+                    models.User.role == "teacher"
+                ).first()
+            if not teacher:
+                # 创建占位账号，密码使用随机 UUID 保证安全
                 from core.auth import hash_password
+                placeholder_username = f"teacher_{uuid.uuid4().hex[:8]}"
                 teacher = models.User(
-                    username=teacher_name,
-                    hashed_password=hash_password("teacher123"),
+                    username=placeholder_username,
+                    full_name=teacher_name,
+                    hashed_password=hash_password(uuid.uuid4().hex),
                     role="teacher"
                 )
                 db.add(teacher)
-                db.commit()
-                db.refresh(teacher)
+                db.flush()  # 获取 id 但不 commit，由最外层统一提交
 
             course = db.query(models.Course).filter(
                 models.Course.name == course_name,
@@ -61,8 +69,7 @@ async def import_timetable(
             if not course:
                 course = models.Course(name=course_name, course_code=course_code, teacher_id=teacher.id)
                 db.add(course)
-                db.commit()
-                db.refresh(course)
+                db.flush()  # 获取 id
                 created_courses += 1
 
             db.query(models.TimetableEntry).filter(
@@ -70,7 +77,7 @@ async def import_timetable(
                 models.TimetableEntry.course_id == course.id,
                 models.TimetableEntry.day_of_week == item.get("day_of_week"),
                 models.TimetableEntry.start_session == item.get("start_session")
-            ).delete()
+            ).delete(synchronize_session=False)
 
             entry = models.TimetableEntry(
                 student_id=current_user.id,
@@ -84,7 +91,7 @@ async def import_timetable(
             db.add(entry)
             created_entries += 1
 
-        db.commit()
+        db.commit()  # 所有操作统一提交
     except Exception as e:
         db.rollback()
         logger.error(f"DB error during timetable import: {e}")
@@ -99,21 +106,23 @@ async def import_timetable(
 
 @router.get("/")
 def get_timetable(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    """返回当前用户的课表条目"""
-    entries = db.query(models.TimetableEntry).filter(
-        models.TimetableEntry.student_id == current_user.id
-    ).all()
-    result = []
-    for e in entries:
-        course = db.query(models.Course).filter(models.Course.id == e.course_id).first()
-        result.append({
+    """返回当前用户的课表条目（joinedload 消除 N+1 查询）"""
+    entries = (
+        db.query(models.TimetableEntry)
+        .options(joinedload(models.TimetableEntry.course))
+        .filter(models.TimetableEntry.student_id == current_user.id)
+        .all()
+    )
+    return [
+        {
             "id": e.id,
-            "course_name": course.name if course else "未知",
-            "course_code": course.course_code if course else "",
+            "course_name": e.course.name if e.course else "未知",
+            "course_code": e.course.course_code if e.course else "",
             "day_of_week": e.day_of_week,
             "start_session": e.start_session,
             "end_session": e.end_session,
             "weeks": e.weeks,
             "location": e.location,
-        })
-    return result
+        }
+        for e in entries
+    ]

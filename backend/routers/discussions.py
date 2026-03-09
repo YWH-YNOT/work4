@@ -56,7 +56,7 @@ def create_discussion(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    d = models.Discussion(**req.dict(), author_id=current_user.id)
+    d = models.Discussion(**req.model_dump(), author_id=current_user.id)
     db.add(d)
     db.commit()
     db.refresh(d)
@@ -76,6 +76,7 @@ def get_discussion(
         raise HTTPException(404, "帖子不存在")
     d.views += 1
     db.commit()
+    db.refresh(d)
     return {
         "id": d.id, "title": d.title, "content": d.content,
         "views": d.views, "created_at": d.created_at.isoformat(),

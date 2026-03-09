@@ -38,7 +38,7 @@ def create_announcement(
     db: Session = Depends(get_db),
     current_user=Depends(require_role("teacher", "admin"))
 ):
-    a = models.Announcement(**req.dict(), author_id=current_user.id)
+    a = models.Announcement(**req.model_dump(), author_id=current_user.id)
     db.add(a)
     db.commit()
     db.refresh(a)

@@ -6,7 +6,7 @@ from core.auth import get_current_user, require_role
 from models import core as models
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -44,19 +44,31 @@ def list_assignments(
         ]
         q = q.filter(models.Assignment.course_id.in_(my_course_ids))
     assignments = q.order_by(models.Assignment.created_at.desc()).all()
+    assignment_ids = [a.id for a in assignments]
+
+    # 批量查询：消除 N+1 问题
+    sub_map: dict = {}     # {assignment_id: Submission} 仅学生用
+    count_map: dict = {}   # {assignment_id: int} 仅教师/管理员用
+    if assignment_ids:
+        if current_user.role == "student":
+            subs = db.query(models.Submission).filter(
+                models.Submission.assignment_id.in_(assignment_ids),
+                models.Submission.student_id == current_user.id
+            ).all()
+            sub_map = {s.assignment_id: s for s in subs}
+        elif current_user.role in ("teacher", "admin"):
+            from sqlalchemy import func
+            rows = (
+                db.query(models.Submission.assignment_id, func.count(models.Submission.id).label("cnt"))
+                .filter(models.Submission.assignment_id.in_(assignment_ids))
+                .group_by(models.Submission.assignment_id)
+                .all()
+            )
+            count_map = {r.assignment_id: r.cnt for r in rows}
+
     result = []
     for a in assignments:
-        sub = None
-        submissions_count = None
-        if current_user.role == "student":
-            sub = db.query(models.Submission).filter(
-                models.Submission.assignment_id == a.id,
-                models.Submission.student_id == current_user.id
-            ).first()
-        elif current_user.role in ("teacher", "admin"):
-            submissions_count = db.query(models.Submission).filter(
-                models.Submission.assignment_id == a.id
-            ).count()
+        sub = sub_map.get(a.id)
         result.append({
             "id": a.id, "course_id": a.course_id, "title": a.title,
             "description": a.description, "type": a.type,
@@ -64,7 +76,7 @@ def list_assignments(
             "created_at": a.created_at.isoformat(),
             "submitted": sub is not None,
             "score": sub.score if sub else None,
-            "submissions_count": submissions_count,
+            "submissions_count": count_map.get(a.id),
         })
     return result
 
@@ -75,7 +87,7 @@ def create_assignment(
     db: Session = Depends(get_db),
     current_user=Depends(require_role("teacher", "admin"))
 ):
-    a = models.Assignment(**req.dict())
+    a = models.Assignment(**req.model_dump())
     db.add(a)
     db.commit()
     db.refresh(a)
@@ -89,15 +101,20 @@ def submit_assignment(
     db: Session = Depends(get_db),
     current_user=Depends(require_role("student"))
 ):
-    if not db.query(models.Assignment).filter(models.Assignment.id == assignment_id).first():
+    assignment = db.query(models.Assignment).filter(models.Assignment.id == assignment_id).first()
+    if not assignment:
         raise HTTPException(404, "作业不存在")
+    # 检查截止日期
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if assignment.due_date and now > assignment.due_date:
+        raise HTTPException(400, "不能提交：作业已过截止日期")
     existing = db.query(models.Submission).filter(
         models.Submission.assignment_id == assignment_id,
         models.Submission.student_id == current_user.id
     ).first()
     if existing:
         existing.content = req.content
-        existing.submitted_at = datetime.utcnow()
+        existing.submitted_at = now
         db.commit()
         return existing
     sub = models.Submission(assignment_id=assignment_id, student_id=current_user.id, content=req.content)

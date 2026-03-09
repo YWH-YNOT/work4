@@ -9,8 +9,12 @@ from sqlalchemy import (
     Text, Float, JSON
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from core.database import Base
+
+# 统一时间戳工厂：无时区 naive datetime，与 SQLite 兼容
+def _now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
@@ -23,7 +27,7 @@ class User(Base):
     role = Column(String, default="student")   # student | teacher | admin
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     # Relationships
     taught_courses = relationship("Course", back_populates="teacher")
@@ -47,7 +51,7 @@ class Course(Base):
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
     teacher_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     # Relationships
     teacher = relationship("User", back_populates="taught_courses")
@@ -87,7 +91,7 @@ class ChatLog(Base):
     role = Column(String)               # user | assistant
     content = Column(Text)
     conversation_id = Column(String, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     user = relationship("User", back_populates="chat_logs")
     course = relationship("Course", back_populates="chat_logs")
@@ -102,7 +106,7 @@ class Resource(Base):
     filename = Column(String, nullable=False)
     filepath = Column(String, nullable=False)
     file_size = Column(Integer)         # bytes
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course", back_populates="resources")
     uploader = relationship("User", back_populates="uploaded_resources")
@@ -117,7 +121,7 @@ class Assignment(Base):
     description = Column(Text)
     type = Column(String, default="homework")   # homework | report
     due_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course", back_populates="assignments")
     submissions = relationship("Submission", back_populates="assignment")
@@ -133,7 +137,7 @@ class Submission(Base):
     file_path = Column(String, nullable=True)
     score = Column(Float, nullable=True)
     feedback = Column(Text, nullable=True)
-    submitted_at = Column(DateTime, default=datetime.utcnow)
+    submitted_at = Column(DateTime, default=_now)
 
     assignment = relationship("Assignment", back_populates="submissions")
     student = relationship("User", back_populates="submissions")
@@ -148,7 +152,7 @@ class Quiz(Base):
     time_limit = Column(Integer, nullable=True)     # minutes
     start_at = Column(DateTime, nullable=True)
     end_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course", back_populates="quizzes")
     questions = relationship("QuizQuestion", back_populates="quiz")
@@ -175,7 +179,7 @@ class QuizAttempt(Base):
     student_id = Column(Integer, ForeignKey("users.id"), index=True)
     answers = Column(JSON)              # {question_id: selected_option}
     score = Column(Float, nullable=True)
-    submitted_at = Column(DateTime, default=datetime.utcnow)
+    submitted_at = Column(DateTime, default=_now)
 
     quiz = relationship("Quiz", back_populates="attempts")
     student = relationship("User", back_populates="quiz_attempts")
@@ -190,7 +194,7 @@ class Announcement(Base):
     title = Column(String, nullable=False)
     content = Column(Text)
     priority = Column(Integer, default=0)   # 0 normal, 1 important, 2 urgent
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course", back_populates="announcements")
     author = relationship("User", back_populates="announcements")
@@ -218,7 +222,7 @@ class AttendanceSession(Base):
     teacher_id = Column(Integer, ForeignKey("users.id"))
     title = Column(String, default="课堂签到")
     deadline = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course")
     teacher = relationship("User")
@@ -233,7 +237,7 @@ class Grade(Base):
     assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=True)
     score = Column(Float)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     student = relationship("User", back_populates="grades")
     course = relationship("Course", back_populates="grades")
@@ -248,7 +252,7 @@ class Discussion(Base):
     title = Column(String, nullable=False)
     content = Column(Text)
     views = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     course = relationship("Course", back_populates="discussions")
     author = relationship("User", back_populates="discussions")
@@ -262,7 +266,20 @@ class Comment(Base):
     discussion_id = Column(Integer, ForeignKey("discussions.id"), index=True)
     author_id = Column(Integer, ForeignKey("users.id"))
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_now)
 
     discussion = relationship("Discussion", back_populates="comments")
     author = relationship("User", back_populates="comments")
+
+
+class PostureRecord(Base):
+    """姿态检测记录：Jetson 每次推送一条快照"""
+    __tablename__ = "posture_records"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    course_id   = Column(Integer, ForeignKey("courses.id"), nullable=True)
+    snapshot    = Column(JSON)          # [{id, label, label_cn, bbox}]
+    jetson_ip   = Column(String, nullable=True)
+    recorded_at = Column(DateTime, default=_now, index=True)
+
+    course = relationship("Course")

@@ -36,10 +36,17 @@ export const useAuthStore = defineStore('auth', () => {
         delete axios.defaults.headers.common['Authorization']
     }
 
+    function updateUser(newUser: Partial<User>) {
+        if (user.value) {
+            user.value = { ...user.value, ...newUser }
+            localStorage.setItem('user', JSON.stringify(user.value))
+        }
+    }
+
     // Restore axios header on page reload
     if (token.value) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
     }
 
-    return { token, user, isLoggedIn, isStudent, isTeacher, isAdmin, setAuth, logout }
+    return { token, user, isLoggedIn, isStudent, isTeacher, isAdmin, setAuth, logout, updateUser }
 })

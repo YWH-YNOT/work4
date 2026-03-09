@@ -26,3 +26,9 @@ Thumbs.db
 # Misc
 nul
 *.log
+
+# Database & Env
+*.db
+*.db-journal
+.env
+test_temp.db
