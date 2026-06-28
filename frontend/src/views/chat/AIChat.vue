@@ -5,7 +5,7 @@
       <div class="p-6 border-b border-slate-100">
         <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
           <el-icon class="text-indigo-600"><ChatDotRound /></el-icon>
-          AI 助教宇宙
+          AI 助学空间
         </h2>
         <p class="text-sm text-slate-500 mt-1 font-medium">智能代理 · RAG增强</p>
       </div>
@@ -49,7 +49,7 @@
       <header class="h-16 px-6 glass flex items-center justify-between z-10 sticky top-0 shadow-sm">
         <div class="flex items-center gap-3">
           <h3 class="font-bold text-slate-800 text-lg">
-            {{ activeCourse?.name || '请选择课程' }} 的 AI 助教
+            {{ activeCourse?.name || '请选择课程' }} 的 AI 助学
           </h3>
           <span v-if="activeCourse" class="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -120,7 +120,7 @@
           <textarea
             v-model="inputMsg"
             @keydown.enter.prevent="sendMessage"
-            placeholder="向 AI 助教提问关于该课程的问题 (支持 RAG 文档召回)..."
+            placeholder="向 AI 助学提问关于该课程的问题 (支持 RAG 文档召回)..."
             class="w-full bg-slate-100/50 border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-2xl py-4 pl-6 pr-16 text-slate-700 focus:outline-none transition-all duration-300 resize-none shadow-sm"
             rows="2"
             :disabled="isStreaming || !activeCourseId"
@@ -165,7 +165,7 @@ const activeCourseId = ref(1)
 const activeCourse = computed(() => courses.value.find(c => c.id === activeCourseId.value))
 
 const messages = ref<{role: string, content: string}[]>([
-  { role: 'assistant', content: '你好！我是你的 AI 专属助教。我已经阅读了你上传的全部讲义和资料。有关这门课的任何问题，随时问我！' }
+  { role: 'assistant', content: '你好！我是你的 AI 助学助手。我已经阅读了你上传的全部讲义和资料。有关这门课的任何问题，随时问我！' }
 ])
 
 const inputMsg = ref('')

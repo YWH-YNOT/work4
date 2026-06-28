@@ -109,7 +109,7 @@
           @click="router.push('/student/chat')"
           class="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-semibold transition-colors shadow-xl"
         >
-          前往 AI 助教工作台 &rarr;
+          前往 AI 助学工作台 &rarr;
         </button>
       </div>
     </div>

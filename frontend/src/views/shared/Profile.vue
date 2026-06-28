@@ -49,21 +49,39 @@
           ⚠️ 请先在左侧设置「真实姓名」并保存，再来上传人脸照片。
         </div>
         <template v-else>
-        <p class="card-desc">上传近期清晰证件照/免冠照，用于课堂姿态及专注度识别。图片格式支持 JPG、PNG。</p>
+        <p class="card-desc">使用教室采集终端现场拍照注册。建议每人采集 3-5 张：正脸、左右轻微转头、自然上课坐姿；每次确认都会追加到人脸库。</p>
+
+        <div class="camera-panel">
+          <div class="camera-stage">
+            <img v-if="previewUrl" :src="previewUrl" class="preview-img" alt="人脸预览" />
+            <div v-if="!previewUrl" class="camera-placeholder">
+              <div class="icon">📸</div>
+              <div class="text">现场拍照注册</div>
+            </div>
+          </div>
+          <div class="camera-actions">
+            <button type="button" class="btn btn-secondary" :disabled="deviceCapturing" @click="captureDevicePhoto">
+              <span v-if="deviceCapturing" class="spinner"></span>
+              {{ deviceCapturing ? '拍照中...' : '现场拍照' }}
+            </button>
+            <button v-if="previewUrl" type="button" class="btn btn-ghost" @click="clearSelectedFace">
+              重新拍/选
+            </button>
+          </div>
+        </div>
         
-        <div class="upload-area" @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
+        <div v-if="!previewUrl" class="upload-area" @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
           <input type="file" ref="fileInput" accept="image/jpeg,image/png" class="hidden" @change="handleFileChange" />
-          <div v-if="!previewUrl" class="upload-placeholder">
+          <div class="upload-placeholder">
             <div class="icon">📷</div>
             <div class="text">点击或拖拽照片到此处上传</div>
           </div>
-          <img v-else :src="previewUrl" class="preview-img" alt="人脸预览" />
         </div>
 
         <div class="form-actions mt-4">
           <button @click="uploadFace" class="btn btn-emerald" :disabled="!selectedFile || uploading">
             <span v-if="uploading" class="spinner"></span>
-            {{ uploading ? '上传中...' : '确认上传照片' }}
+            {{ uploading ? '上传中...' : '确认注册人脸' }}
           </button>
           <span v-if="faceSuccessMsg" class="msg-success">{{ faceSuccessMsg }}</span>
           <span v-if="faceErrorMsg" class="msg-error">{{ faceErrorMsg }}</span>
@@ -75,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
 
@@ -123,6 +141,7 @@ const previewUrl = ref('')
 const uploading = ref(false)
 const faceSuccessMsg = ref('')
 const faceErrorMsg = ref('')
+const deviceCapturing = ref(false)
 
 function triggerUpload() {
   fileInput.value?.click()
@@ -130,15 +149,13 @@ function triggerUpload() {
 
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    setFile(target.files[0])
-  }
+  const file = target.files?.item(0)
+  if (file) setFile(file)
 }
 
 function handleDrop(e: DragEvent) {
-  if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-    setFile(e.dataTransfer.files[0])
-  }
+  const file = e.dataTransfer?.files.item(0)
+  if (file) setFile(file)
 }
 
 function setFile(file: File) {
@@ -149,7 +166,36 @@ function setFile(file: File) {
     return
   }
   selectedFile.value = file
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = URL.createObjectURL(file)
+}
+
+async function captureDevicePhoto() {
+  faceSuccessMsg.value = ''
+  faceErrorMsg.value = ''
+  clearSelectedFace()
+  deviceCapturing.value = true
+
+  try {
+    const res = await axios.get('/api/v1/auth/jetson-face-snapshot', {
+      responseType: 'blob'
+    })
+    const blob = res.data as Blob
+    setFile(new File([blob], `现场人脸_${Date.now()}.jpg`, { type: 'image/jpeg' }))
+  } catch (err: any) {
+    faceErrorMsg.value = err.response?.data?.detail || '现场拍照失败，请确认采集终端在线且画面中有清晰人脸'
+  } finally {
+    deviceCapturing.value = false
+  }
+}
+
+function clearSelectedFace() {
+  selectedFile.value = null
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = ''
+  }
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 async function uploadFace() {
@@ -165,7 +211,7 @@ async function uploadFace() {
     await axios.post('/api/v1/auth/upload-face', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-    faceSuccessMsg.value = '人脸注册成功！识别库已更新。'
+    faceSuccessMsg.value = '人脸样本已追加，识别库已更新。建议继续采集到 3-5 张。'
     setTimeout(() => faceSuccessMsg.value = '', 5000)
   } catch (err: any) {
     faceErrorMsg.value = err.response?.data?.detail || '上传失败'
@@ -173,6 +219,10 @@ async function uploadFace() {
     uploading.value = false
   }
 }
+
+onBeforeUnmount(() => {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+})
 </script>
 
 <style scoped>
@@ -206,6 +256,10 @@ async function uploadFace() {
 .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59,130,246,0.4); }
 .btn-emerald { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
 .btn-emerald:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,185,129,0.4); }
+.btn-secondary { background: rgba(59,130,246,.16); color: #bfdbfe; border: 1px solid rgba(96,165,250,.35); }
+.btn-secondary:hover:not(:disabled) { background: rgba(59,130,246,.24); }
+.btn-ghost { background: rgba(255,255,255,.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,.12); }
+.btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.1); }
 
 .mt-4 { margin-top: 16px; grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; }
 
@@ -223,6 +277,13 @@ async function uploadFace() {
 .upload-placeholder .icon { font-size: 2rem; margin-bottom: 8px; color: #9ca3af; }
 .upload-placeholder .text { font-size: .85rem; }
 .preview-img { width: 100%; height: 100%; object-fit: contain; }
+
+.camera-panel { margin-bottom: 16px; }
+.camera-stage { height: 260px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(16,185,129,.22); background: rgba(0,0,0,.22); display: flex; align-items: center; justify-content: center; }
+.camera-placeholder { text-align: center; color: #8aa0b6; }
+.camera-placeholder .icon { font-size: 2rem; margin-bottom: 8px; }
+.camera-placeholder .text { font-size: .9rem; font-weight: 600; }
+.camera-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 
 /* 未设置姓名提示 */
 .no-name-tip {

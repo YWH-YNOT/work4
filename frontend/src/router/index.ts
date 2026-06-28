@@ -18,6 +18,8 @@ const router = createRouter({
                 { path: 'dashboard', component: () => import('@/views/student/Dashboard.vue') },
                 { path: 'chat', component: () => import('@/views/student/Chat.vue') },
                 { path: 'timetable', component: () => import('@/views/student/Timetable.vue') },
+                { path: 'course-progress', component: () => import('@/views/student/CourseProgress.vue') },
+                { path: 'analysis', component: () => import('@/views/student/LearningAnalysis.vue') },
                 { path: 'assignments', component: () => import('@/views/student/Assignments.vue') },
                 { path: 'quiz', component: () => import('@/views/student/Quiz.vue') },
                 { path: 'grades', component: () => import('@/views/student/Grades.vue') },
@@ -37,12 +39,16 @@ const router = createRouter({
             children: [
                 { path: '', redirect: '/teacher/dashboard' },
                 { path: 'dashboard', component: () => import('@/views/teacher/Dashboard.vue') },
+                { path: 'course-progress', component: () => import('@/views/teacher/AcceptanceDemo.vue') },
+                { path: 'acceptance-demo', redirect: '/teacher/course-progress' },
                 { path: 'courses', component: () => import('@/views/teacher/Courses.vue') },
                 { path: 'assignments', component: () => import('@/views/teacher/Assignments.vue') },
                 { path: 'quiz', component: () => import('@/views/teacher/Quiz.vue') },
                 { path: 'resources', component: () => import('@/views/teacher/Resources.vue') },
+                { path: 'knowledge', component: () => import('@/views/teacher/KnowledgeGraph.vue') },
                 { path: 'attendance', component: () => import('@/views/teacher/Attendance.vue') },
                 { path: 'grades', component: () => import('@/views/teacher/Grades.vue') },
+                { path: 'gradebook', component: () => import('@/views/teacher/Gradebook.vue') },
                 { path: 'announcements', component: () => import('@/views/teacher/Announcements.vue') },
                 { path: 'discussions', component: () => import('@/views/teacher/Discussions.vue') },
                 { path: 'logs', component: () => import('@/views/teacher/Logs.vue') },
@@ -72,12 +78,12 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to) => {
     const auth = useAuthStore()
 
-    if (to.meta.public) return next()
+    if (to.meta.public) return true
 
-    if (!auth.isLoggedIn) return next('/login')
+    if (!auth.isLoggedIn) return '/login'
 
     if (to.meta.role && auth.user?.role !== to.meta.role) {
         // Redirect to appropriate portal based on role
@@ -86,10 +92,10 @@ router.beforeEach((to, _from, next) => {
             teacher: '/teacher/dashboard',
             admin: '/admin/dashboard',
         }
-        return next(portals[auth.user?.role || 'student'] || '/login')
+        return portals[auth.user?.role || 'student'] || '/login'
     }
 
-    next()
+    return true
 })
 
 export default router

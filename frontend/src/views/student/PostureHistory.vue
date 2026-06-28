@@ -3,7 +3,7 @@
     <!-- 页头 -->
     <div class="page-header">
       <div>
-        <div class="page-title">📊 我的姿态记录</div>
+        <div class="page-title">我的课堂表现</div>
         <div class="page-sub">课堂专注度历史 · {{ myStats.my_name || '加载中...' }}</div>
       </div>
       <div class="rate-badge" :class="rateClass">专注率 {{ myStats.attentive_rate ?? 0 }}%</div>
@@ -12,8 +12,8 @@
     <!-- 无数据提示 -->
     <div v-if="!loading && myStats.total === 0" class="empty-state">
       <div class="empty-icon">�</div>
-      <div class="empty-text">暂无姿态记录</div>
-      <div class="empty-sub">尚未被 Jetson 摄像头识别到，或人脸数据未注册。</div>
+      <div class="empty-text">暂无课堂表现记录</div>
+      <div class="empty-sub">尚未采集到课堂表现记录，或人脸数据未注册。</div>
     </div>
 
     <template v-else>
@@ -37,9 +37,9 @@
               <path :d="seg.d" :fill="seg.color" opacity="0.85" />
             </template>
             <!-- 中心文字 -->
-            <circle cx="50" cy="50" r="26" fill="#050e1a" />
+            <circle cx="50" cy="50" r="26" fill="#ffffff" />
             <text x="50" y="47" text-anchor="middle" fill="#10b981" font-size="9" font-weight="700">{{ myStats.attentive_rate ?? 0 }}%</text>
-            <text x="50" y="57" text-anchor="middle" fill="#9ca3af" font-size="5.5">专注率</text>
+            <text x="50" y="57" text-anchor="middle" fill="#5b6f92" font-size="5.5">专注率</text>
           </svg>
           <!-- 图例 -->
           <div class="pie-legend">
@@ -49,6 +49,17 @@
               <span class="legend-val">{{ myStats[item.key] ?? 0 }} 次</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="analysis-section" :class="myStats.analysis?.level || 'info'">
+        <div class="analysis-head">
+          <span>AI 分析</span>
+          <strong>{{ myStats.analysis?.title || '课堂表现分析' }}</strong>
+        </div>
+        <p>{{ myStats.analysis?.detail || '系统将根据课堂表现样本生成专注、分心、困倦和离席分析。' }}</p>
+        <div class="analysis-suggestions">
+          <span v-for="item in myStats.analysis?.suggestions || []" :key="item">{{ item }}</span>
         </div>
       </div>
 
@@ -138,12 +149,12 @@ onMounted(loadStats)
 </script>
 
 <style scoped>
-.posture-history { padding: 28px; color: #c8d6e5; font-family: 'Inter', sans-serif; }
+.posture-history { padding: 28px; color: #0f2f64; font-family: 'Inter', sans-serif; }
 
 /* ── 页头 ── */
 .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-.page-title  { font-size: 1.6rem; font-weight: 700; color: #a8ff78; }
-.page-sub    { font-size: .8rem; color: #6b7280; margin-top: 4px; }
+.page-title  { font-size: 1.6rem; font-weight: 900; color: #0f2f64; }
+.page-sub    { font-size: .8rem; color: #5b6f92; margin-top: 4px; }
 .rate-badge  { padding: 8px 20px; border-radius: 20px; font-size: 1rem; font-weight: 700; border: 1px solid; }
 .rate-badge.good { color: #10b981; border-color: #10b981; background: rgba(16,185,129,.1); }
 .rate-badge.mid  { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,.1); }
@@ -157,30 +168,38 @@ onMounted(loadStats)
 
 /* ── 四格统计 ── */
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-.stat-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-top-width: 3px; border-radius: 14px; padding: 18px 16px; text-align: center; }
+.stat-card { background: rgba(255,255,255,.92); border: 1px solid #d9e7f7; border-top-width: 3px; border-radius: 14px; padding: 18px 16px; text-align: center; box-shadow: 0 10px 24px rgba(15,47,100,.06); }
 .stat-num  { font-size: 2.2rem; font-weight: 800; line-height: 1; }
-.stat-label{ font-size: .8rem; color: #9ca3af; margin-top: 6px; }
+.stat-label{ font-size: .8rem; color: #5b6f92; margin-top: 6px; }
 .stat-pct  { font-size: .85rem; font-weight: 600; margin-top: 4px; opacity: .8; }
 
 /* ── 饼图 ── */
-.pie-section { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-.panel-label { font-size: .82rem; color: #10b981; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+.pie-section, .analysis-section, .records-section { background: rgba(255,255,255,.92); border: 1px solid #d9e7f7; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 24px rgba(15,47,100,.06); }
+.panel-label { font-size: .82rem; color: #14a46f; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
 .pie-wrap    { display: flex; align-items: center; gap: 36px; }
 .pie-svg     { width: 160px; height: 160px; flex-shrink: 0; }
 .pie-legend  { display: flex; flex-direction: column; gap: 10px; }
 .legend-item { display: flex; align-items: center; gap: 10px; }
 .legend-dot  { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-.legend-label{ font-size: .88rem; color: #9ca3af; width: 36px; }
-.legend-val  { font-size: .9rem; font-weight: 600; color: #f3f4f6; }
+.legend-label{ font-size: .88rem; color: #5b6f92; width: 36px; }
+.legend-val  { font-size: .9rem; font-weight: 700; color: #0f2f64; }
+
+.analysis-section { border-left: 4px solid #0b63b6; }
+.analysis-section.good { border-left-color: #10b981; background: #f4fbf8; }
+.analysis-section.warning { border-left-color: #f59e0b; background: #fffaf0; }
+.analysis-section.danger { border-left-color: #ef4444; background: #fff7f6; }
+.analysis-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.analysis-head span { padding: 4px 8px; border-radius: 6px; color: #0b63b6; background: #eaf3ff; font-size: .75rem; font-weight: 900; }
+.analysis-head strong { color: #0f2f64; font-size: 1rem; }
+.analysis-section p { color: #5b6f92; margin: 0; line-height: 1.7; font-size: .9rem; }
+.analysis-suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.analysis-suggestions span { padding: 6px 10px; border-radius: 8px; color: #0f2f64; background: #ffffff; border: 1px solid #d9e7f7; font-size: .78rem; font-weight: 700; }
 
 /* ── 记录列表 ── */
-.records-section { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05); border-radius: 16px; padding: 20px; }
 .records-list    { max-height: 300px; overflow-y: auto; }
-.records-list::-webkit-scrollbar { width: 4px; }
-.records-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
-.record-row  { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,.02); }
-.record-row:hover { background: rgba(255,255,255,.04); }
-.rec-time    { font-size: .82rem; color: #6b7280; font-family: monospace; }
+.record-row  { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; background: #f8fbff; border: 1px solid #e1ecf8; }
+.record-row:hover { background: #eaf3ff; }
+.rec-time    { font-size: .82rem; color: #5b6f92; font-family: monospace; }
 .rec-badge   { font-size: .75rem; padding: 3px 10px; border-radius: 6px; font-weight: 600; border: 1px solid transparent; }
 .rec-badge.attentive  { background: rgba(16,185,129,.1);  color: #34d399; border-color: rgba(16,185,129,.3); }
 .rec-badge.drowsy     { background: rgba(245,158,11,.1);  color: #fbbf24; border-color: rgba(245,158,11,.3); }

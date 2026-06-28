@@ -220,25 +220,26 @@ onMounted(() => {
 /* 课表展示区 */
 .timetable-view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .toolbar { margin-bottom: 16px; display: flex; justify-content: flex-end; flex-shrink: 0; }
-.action-btn { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-.action-btn:hover { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+.action-btn { background: #eaf3ff; color: #075da8; border: 1px solid #b8d8f8; border-radius: 8px; padding: 8px 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.action-btn:hover { background: #dcedff; color: #053b7a; box-shadow: 0 8px 18px rgba(11,99,182,0.12); }
 
 .timetable-grid-wrapper {
   flex: 1; overflow: auto; border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.05); background: rgba(15,23,42,0.6);
+  border: 1px solid #cfe0f4; background: rgba(255,255,255,0.82);
+  box-shadow: 0 16px 36px rgba(15,47,100,0.08);
 }
 .timetable-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 .timetable-table th {
   position: sticky; top: 0; z-index: 10;
-  background: #1e293b; color: var(--text-secondary); font-weight: 600; font-size: 13px;
-  padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;
+  background: #e7f2ff; color: #0f2f64; font-weight: 800; font-size: 13px;
+  padding: 12px; border-bottom: 1px solid #cfe0f4; text-align: center;
 }
 .timetable-table td {
-  border: 1px solid rgba(255,255,255,0.03); vertical-align: top;
+  border: 1px solid #e3edf8; vertical-align: top;
   min-height: 0; min-width: 120px; padding: 0;
 }
 
-.time-col { width: 60px; text-align: center; font-size: 11px; color: var(--text-secondary); background: rgba(255,255,255,0.01); }
+.time-col { width: 60px; text-align: center; font-size: 11px; color: #5b6f92; background: #f7fbff; font-weight: 700; }
 .slot-cell { position: relative; padding: 3px; vertical-align: top; }
 
 /* slot-content：垂直堆叠，gap 分隔多课，不拉伸 */
@@ -264,8 +265,8 @@ onMounted(() => {
   box-sizing: border-box;
 }
 .course-block:hover {
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
-  filter: brightness(1.08);
+  box-shadow: 0 8px 18px rgba(15,47,100,0.12);
+  filter: brightness(1.02);
 }
 
 .c-name {
@@ -334,6 +335,6 @@ onMounted(() => {
 .result-card.error .result-icon { color: #f87171; }
 .result-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
 .result-msg { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
-.goto-btn { margin-left: auto; background: #1e1b4b; color: #818cf8; padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(99,102,241,0.3); font-weight: 600; cursor: pointer; transition: all 0.2s;}
-.goto-btn:hover { background: rgba(99,102,241,0.15); color: white; }
+.goto-btn { margin-left: auto; background: #eaf3ff; color: #075da8; padding: 10px 18px; border-radius: 10px; border: 1px solid #b8d8f8; font-weight: 700; cursor: pointer; transition: all 0.2s;}
+.goto-btn:hover { background: #dcedff; color: #053b7a; }
 </style>

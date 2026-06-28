@@ -1,7 +1,7 @@
-import { watch } from 'vue';
 const initTheme = () => {
-  const isLight = localStorage.getItem('theme') === 'light';
-  if (isLight) document.documentElement.className = 'light-mode';
+  const theme = localStorage.getItem('theme') || 'light';
+  localStorage.setItem('theme', theme);
+  document.documentElement.className = theme === 'light' ? 'light-mode' : '';
 };
 initTheme();
 import { createApp } from 'vue'

@@ -22,7 +22,7 @@
           <td class="name-cell"><div class="avatar-sm">{{ u.username.charAt(0).toUpperCase() }}</div>{{ u.username }}</td>
           <td>{{ u.full_name || '-' }}</td>
           <td>{{ u.email || '-' }}</td>
-          <td><span class="badge" :class="u.role">{{ {'student':'学生','teacher':'教师','admin':'管理员'}[u.role] }}</span></td>
+          <td><span class="badge" :class="u.role">{{ roleLabels[u.role] || u.role }}</span></td>
           <td><span class="status" :class="u.is_active?'active':'inactive'">{{ u.is_active?'正常':'禁用' }}</span></td>
           <td class="actions">
             <button @click="toggleUser(u)" class="action-btn toggle" :title="u.is_active?'禁用':'激活'">
@@ -45,6 +45,11 @@ import axios from 'axios'
 const users = ref<any[]>([])
 const search = ref('')
 const roleFilter = ref('')
+const roleLabels: Record<string, string> = {
+  student: '学生',
+  teacher: '教师',
+  admin: '管理员'
+}
 
 const filteredUsers = computed(() => {
   let list = users.value

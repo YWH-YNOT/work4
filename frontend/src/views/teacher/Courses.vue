@@ -1,94 +1,116 @@
 <template>
   <div class="page">
-    <div class="page-header-row">
-      <h1 class="page-title">我的课程</h1>
-      <button @click="showCreate=true" class="create-btn"><el-icon><Plus /></el-icon> 创建课程</button>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">我的授课课程</h1>
+        <p class="page-sub">课程、选课和授课关系由管理员导入。教师端用于查看课程、维护资源、重建 RAG 和查看知识图谱。</p>
+      </div>
+      <button class="ghost-btn" @click="load" :disabled="loading">
+        <el-icon><Refresh /></el-icon>
+        {{ loading ? '刷新中' : '刷新课程' }}
+      </button>
     </div>
+
+    <div class="notice-band">
+      <strong>数据来源</strong>
+      <span>学生名单、选课表和授课表由管理员在“课程与教务数据”中统一导入，教师端不再直接创建或导入学生。</span>
+    </div>
+
     <div class="courses-grid">
-      <div v-for="c in courses" :key="c.id" class="course-card">
-        <div class="course-avatar">{{ c.name.charAt(0) }}</div>
-        <div class="course-name">{{ c.name }}</div>
-        <div class="course-code">{{ c.course_code || '无课号' }}</div>
-        <div class="course-desc">{{ c.description || '暂无描述' }}</div>
-        <button @click="deleteCourse(c.id)" class="del-btn"><el-icon><Delete /></el-icon></button>
-      </div>
-      <div v-if="courses.length===0" class="empty">暂无课程，点击创建第一门课</div>
-    </div>
-    <el-dialog v-model="showCreate" title="创建新课程" width="440px">
-      <div class="dialog-form">
-        <label>课程名称</label><input v-model="newCourse.name" class="inp" placeholder="例如：高等数学A"/>
-        <label>课程代号</label><input v-model="newCourse.course_code" class="inp" placeholder="例如：2523114"/>
-        <label>课程简介</label><textarea v-model="newCourse.description" class="ta" rows="3" placeholder="课程简介（选填）"></textarea>
-        <div class="dialog-actions">
-          <button @click="showCreate=false" class="cancel-btn">取消</button>
-          <button @click="createCourse" class="confirm-btn">创建</button>
+      <article v-for="course in courses" :key="course.id" class="course-card">
+        <div class="course-top">
+          <div class="course-avatar">{{ initial(course.name) }}</div>
+          <span class="course-status">授课中</span>
         </div>
+        <h2>{{ course.name }}</h2>
+        <p class="course-code">{{ course.course_code || '未设置课程代码' }}</p>
+        <p class="course-desc">{{ course.description || '暂无课程简介，管理员导入教学大纲后可在课程知识库补充。' }}</p>
+        <div class="course-actions">
+          <button class="small-btn" @click="router.push('/teacher/resources')">课程知识库</button>
+          <button class="small-btn" @click="router.push('/teacher/course-progress')">课程学情</button>
+          <button v-if="isAutoTest(course)" class="small-btn primary" @click="reindexRag(course)">重建 RAG</button>
+          <button v-if="isAutoTest(course)" class="small-btn" @click="seedGraph(course)">初始化图谱</button>
+          <button v-if="isAutoTest(course)" class="small-btn" @click="router.push('/teacher/knowledge')">查看图谱</button>
+        </div>
+      </article>
+      <div v-if="!loading && courses.length === 0" class="empty">
+        暂无授课课程，请联系管理员导入授课表。
       </div>
-    </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const courses = ref<any[]>([])
-const showCreate = ref(false)
-const newCourse = ref({ name: '', course_code: '', description: '' })
+const loading = ref(false)
+
+const initial = (name: string) => (name || '课').slice(0, 1)
+const isAutoTest = (course: any) => String(course.name || '').includes('自动测试系统')
 
 async function load() {
-  try { const r = await axios.get('/api/v1/courses/my'); courses.value = r.data }
-  catch { ElMessage.error('加载课程列表失败') }
-}
-
-async function createCourse() {
-  if (!newCourse.value.name.trim()) { ElMessage.warning('请输入课程名称'); return }
+  loading.value = true
   try {
-    await axios.post('/api/v1/courses/', newCourse.value)
-    showCreate.value = false
-    newCourse.value = { name: '', course_code: '', description: '' }
-    ElMessage.success('课程创建成功')
-    await load()
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.detail || '创建失败，请重试')
+    const res = await axios.get('/api/v1/courses/my')
+    courses.value = res.data || []
+  } catch (err: any) {
+    ElMessage.error(err.response?.data?.detail || '课程加载失败')
+  } finally {
+    loading.value = false
   }
 }
 
-async function deleteCourse(id: number) {
+async function reindexRag(course: any) {
   try {
-    await ElMessageBox.confirm('确认删除这门课程？相关数据将一并清除。', '删除课程', {
-      confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning',
-    })
-    await axios.delete(`/api/v1/courses/${id}`)
-    ElMessage.success('课程已删除')
-    await load()
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e.response?.data?.detail || '删除失败')
+    const res = await axios.post(`/api/v1/rag/courses/${course.id}/reindex`)
+    ElMessage.success(`RAG 已重建：${res.data.indexed_resources} 个资源，${res.data.indexed_chunks} 个片段`)
+  } catch (err: any) {
+    ElMessage.error(err.response?.data?.detail || 'RAG 重建失败')
   }
 }
+
+async function seedGraph(course: any) {
+  try {
+    const res = await axios.post(`/api/v1/knowledge/courses/${course.id}/seed-auto-test-system`)
+    ElMessage.success(`知识图谱已初始化：${res.data.nodes} 个节点，${res.data.edges} 条关系`)
+  } catch (err: any) {
+    ElMessage.error(err.response?.data?.detail || '知识图谱初始化失败')
+  }
+}
+
 onMounted(load)
 </script>
 
 <style scoped>
-.page { padding: 32px; }
-.page-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.page-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin: 0; }
-.create-btn { display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #059669, #10b981); color: white; border: none; border-radius: 12px; padding: 10px 20px; cursor: pointer; font-weight: 600; }
-.courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-.course-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(16,185,129,0.15); border-radius: 16px; padding: 20px; position: relative; }
-.course-avatar { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #059669, #10b981); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 12px; }
-.course-name { font-size: 15px; font-weight: 700; color: var(--text-main); }
-.course-code { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.course-desc { font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5; }
-.del-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 6px; transition: all 0.18s; font-size: 16px; }
-.del-btn:hover { background: rgba(239,68,68,0.1); color: #f87171; }
-.empty { grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 60px; }
-.dialog-form { display: flex; flex-direction: column; gap: 10px; }
-.dialog-form label { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
-.inp { background: rgba(255,255,255,0.05); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; padding: 10px 14px; color: var(--text-main); font-size: 14px; outline: none; width: 100%; }
-.ta { background: rgba(255,255,255,0.05); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; padding: 10px 14px; color: var(--text-main); font-size: 14px; outline: none; resize: vertical; width: 100%; }
-.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.cancel-btn { padding: 8px 20px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); cursor: pointer; }
-.confirm-btn { padding: 8px 20px; border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); border: none; color: white; cursor: pointer; font-weight: 600; }
+.page { padding: 32px; color: #0f2f64; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 16px; }
+.page-title { font-size: 28px; font-weight: 900; color: #0f2f64; margin: 0; }
+.page-sub { color: #5b6f92; font-size: 13px; line-height: 1.6; margin: 6px 0 0; }
+.ghost-btn { display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0b63b6; border: 1px solid #c8ddf4; border-radius: 8px; padding: 9px 14px; cursor: pointer; font-weight: 800; white-space: nowrap; }
+.ghost-btn:disabled { opacity: .55; cursor: wait; }
+.notice-band { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #d9e7f7; border-radius: 9px; padding: 12px 14px; margin-bottom: 18px; box-shadow: 0 10px 24px rgba(15,47,100,.05); }
+.notice-band strong { color: #0b63b6; }
+.notice-band span { color: #5b6f92; font-size: 13px; line-height: 1.5; }
+.courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.course-card { background: #ffffff; border: 1px solid #d9e7f7; border-radius: 10px; padding: 18px; box-shadow: 0 10px 24px rgba(15,47,100,.06); min-height: 230px; display: flex; flex-direction: column; }
+.course-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.course-avatar { width: 44px; height: 44px; border-radius: 9px; background: #eaf3ff; color: #0b63b6; border: 1px solid #c8ddf4; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; }
+.course-status { color: #0b7d56; background: #e8f7f0; border: 1px solid #b6e6ce; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 800; }
+.course-card h2 { font-size: 17px; font-weight: 900; color: #0f2f64; margin: 0; line-height: 1.35; }
+.course-code { font-size: 12px; color: #5b6f92; margin: 5px 0 0; }
+.course-desc { font-size: 13px; color: #5b6f92; margin: 10px 0 0; line-height: 1.65; min-height: 66px; }
+.course-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 14px; }
+.small-btn { border: 1px solid #c8ddf4; background: #f8fbff; color: #0b63b6; border-radius: 7px; padding: 7px 10px; cursor: pointer; font-weight: 800; font-size: 12px; }
+.small-btn.primary { background: #0b63b6; border-color: #0b63b6; color: #ffffff; }
+.small-btn:hover, .ghost-btn:hover { filter: brightness(.98); }
+.empty { grid-column: 1 / -1; text-align: center; color: #5b6f92; padding: 60px; background: #ffffff; border: 1px dashed #c8ddf4; border-radius: 10px; }
+@media (max-width: 760px) {
+  .page { padding: 20px; }
+  .page-header, .notice-band { flex-direction: column; align-items: flex-start; }
+}
 </style>
